@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="cs" class="bg-[#050505] text-[#e0e0e0] antialiased selection:bg-[#FF3300] selection:text-[#050505]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matchball | 2026 Digital Experience</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { syne: ['Syne', 'sans-serif'], sans: ['Inter', 'sans-serif'] },
+                    colors: { brand: '#FF3300', dark: '#050505' }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lenis (Smooth Scroll) & GSAP -->
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        /* Base & Reset */
+        body, html { margin: 0; padding: 0; overflow-x: hidden; cursor: none; }
+        
+        /* Typography Utilities */
+        .text-stroke { -webkit-text-stroke: 1px rgba(255,255,255,0.2); color: transparent; }
+        .text-stroke-brand { -webkit-text-stroke: 2px #FF3300; color: transparent; }
+        .huge-bg-text { font-size: 35vw; line-height: 0.8; white-space: nowrap; pointer-events: none; }
+
+        /* Custom Cursor */
+        .cursor-dot {
+            width: 12px; height: 12px; background: #FF3300; border-radius: 50%;
+            position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
+            pointer-events: none; z-index: 9999;
+            mix-blend-mode: difference; transition: width 0.3s, height 0.3s;
+        }
+        .cursor-hover .cursor-dot { width: 60px; height: 60px; background: #fff; }
+
+        /* Print Textures: Film Grain & Halftone */
+        .film-grain {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 9990; opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        .halftone-bg {
+            position: absolute; inset: 0; z-index: -1; opacity: 0.15;
+            background-image: radial-gradient(#FF3300 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+
+        /* Loader */
+        #loader {
+            position: fixed; inset: 0; background: #050505; z-index: 10000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        
+        /* Layout Structure & Inner Scroll */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #FF3300; }
+        .inner-scroll { max-height: 65vh; overflow-y: auto; overscroll-behavior: contain; }
+
+        #horizontal-wrapper {
+            width: 500vw; /* 5 panels = 500% viewport width */
+            height: 100vh; display: flex; flex-wrap: nowrap;
+            will-change: transform;
+        }
+        .panel {
+            width: 100vw; height: 100vh; flex-shrink: 0;
+            position: relative; overflow: hidden;
+            display: flex; align-items: center;
+        }
+
+        /* Nav & Details */
+        nav { mix-blend-mode: difference; }
+    </style>
+</head>
+<body>
+
+    <!-- Loader -->
+    <div id="loader">
+        <div class="font-syne text-brand text-xl tracking-[0.5em] uppercase mb-4 overflow-hidden">
+            <div class="loader-text translate-y-full">Matchball Production</div>
+        </div>
+        <div id="loader-counter" class="font-syne font-bold text-[15vw] leading-none text-white overflow-hidden">
+            <div class="loader-num translate-y-full">0%</div>
+        </div>
+    </div>
+
+    <!-- Cursors & Overlays -->
+    <div class="cursor-dot"></div>
+    <div class="film-grain"></div>
+
+    <!-- Fixed Header -->
+    <nav class="fixed top-0 left-0 w-full p-6 md:p-8 z-50 flex justify-between items-center pointer-events-none">
+        <div class="font-syne font-bold text-2xl tracking-tighter text-white pointer-events-auto interactive">MBALL<span class="text-brand">.</span></div>
+        <a href="https://www.facebook.com/matchball.cz" target="_blank" class="pointer-events-auto interactive flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-brand/20 border border-white/10 hover:border-brand/50 backdrop-blur-md text-xs uppercase tracking-widest text-white/90 hover:text-white transition-all duration-300">
+            <svg class="w-3.5 h-3.5 fill-current text-brand" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            <span>Facebook</span>
+        </a>
+    </nav>
+
+    <!-- Horizontal Scroll Container -->
+    <main id="scroll-container" class="overflow-hidden h-screen">
+    <!-- Horizontal Scroll Container -->
+    <main id="scroll-container" class="overflow-hidden h-screen">
+        <div id="horizontal-wrapper">
+            
+            <!-- PANEL 1: HERO & PROČ MY -->
+            <section class="panel bg-dark justify-center px-10 md:px-32">
+                <div class="halftone-bg" style="background-image: radial-gradient(#ffffff 1px, transparent 1px);"></div>
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 huge-bg-text font-syne font-bold text-stroke-brand opacity-20 parallax-element" data-speed="0.2">
+                    GURU
+                </div>
+                <div class="relative z-10 w-full flex flex-col md:flex-row items-center gap-12 parallax-element" data-speed="-0.1">
+                    <div class="flex-1">
+                        <p class="font-sans uppercase tracking-[0.5em] text-brand mb-4 text-xs md:text-sm interactive">The Outdoor (And Indoor) Guru</p>
+                        <h1 class="font-syne font-extrabold text-[12vw] leading-[0.8] tracking-tighter uppercase interactive">
+                            MATCH<br>BALL
+                        </h1>
+                        <p class="font-syne text-xl md:text-3xl mt-6 text-white/50 italic tracking-tight interactive">Vítejte ve světě reklamy.</p>
+                    </div>
+                    <div class="flex-1 font-sans text-sm md:text-lg text-white/70 leading-relaxed font-light space-y-4 inner-scroll custom-scrollbar pr-4" data-lenis-prevent="true">
+                        <p><strong class="text-white font-syne tracking-wide uppercase">Znáte to, když dva dělají totéž, není to totéž.</strong></p>
+                        <p>Nejsme jediná firma v České republice, která se zabývá velkoplošným tiskem, aplikacemi, nebo polepem aut. Kdo má ruce a nohy, pobral trochu rozumu a peněz, může v tomto oboru začít podnikat taky.</p>
+                        <p>Co ovšem odlišuje amatéry od profesionálů je kvalita a výsledky. Nechceme se chválit. Chválí nás naši klienti a na tom záleží.</p>
+                    </div>
+                </div>
+                <div class="absolute bottom-10 left-10 font-sans text-xs uppercase tracking-[0.2em] text-white/30 parallax-element" data-speed="0.5">Scroll to explore &rarr;</div>
+            </section>
+
+            <!-- PANEL 2: TECHNOLOGIE -->
+            <section class="panel bg-[#0a0a0a]">
+                <div class="absolute -right-[10vw] top-1/2 -translate-y-1/2 font-syne font-bold huge-bg-text text-stroke z-0 parallax-element" data-speed="0.4">02</div>
+                <div class="relative z-10 w-full px-10 md:px-32 flex flex-col md:flex-row gap-12 md:gap-24 items-start parallax-element" data-speed="0.1">
+                    <div class="flex-1">
+                        <h2 class="font-syne text-5xl md:text-7xl font-bold mb-6 uppercase tracking-tighter text-brand">Tech<br>nologie.</h2>
+                        <div class="font-sans text-base md:text-lg text-white/70 leading-relaxed font-light space-y-4 inner-scroll custom-scrollbar pr-4" data-lenis-prevent="true">
+                            <p>Jsme blázni do technologií. Zakládáme si na tom, že se u nás tiskne na tom nejlepším, nejrychlejším a nejspolehlivějším, co aktuální tiskařský průmysl nabízí.</p>
+                            <p>Své stroje hýčkáme a když začnou dosluhovat, jsou bez váhání vyměněny za nové. Díky tomu můžeme skutečně pracovat, dosahovat vynikajících výsledků a odvádět špičkovou práci.</p>
+                        </div>
+                    </div>
+                    <div class="flex-[1.5] font-sans text-xs md:text-sm text-white/50 parallax-element w-full" data-speed="0.2">
+                        <div class="border-t border-brand/30 pt-4 mb-6"><strong class="text-white text-lg font-syne uppercase">Strojový park:</strong></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 inner-scroll custom-scrollbar pr-4" data-lenis-prevent="true">
+                            <div class="border-b border-white/5 pb-2">
+                                <span class="block text-white mb-1">Agfa Anapurna M3200i RTR</span>
+                                <span class="text-brand font-mono tracking-widest text-[10px]">UV TISK</span>
+                            </div>
+                            <div class="border-b border-white/5 pb-2">
+                                <span class="block text-white mb-1">D-Gen Papyrus G5</span>
+                                <span class="text-brand font-mono tracking-widest text-[10px]">SUBLIMACE</span>
+                            </div>
+                            <div class="border-b border-white/5 pb-2">
+                                <span class="block text-white mb-1">2x Summa G3S140</span>
+                                <span class="text-brand font-mono tracking-widest text-[10px]">ŠÍŘE 1400 MM</span>
+                            </div>
+                            <div class="border-b border-white/5 pb-2">
+                                <span class="block text-white mb-1">3x Mimaki JV33</span>
+                                <span class="text-brand font-mono tracking-widest text-[10px]">ŠÍŘE 1600 MM</span>
+                            </div>
+                            <div class="border-b border-white/5 pb-2">
+                                <span class="block text-white mb-1">SwissQprint Nyala 4</span>
+                                <span class="text-brand font-mono tracking-widest text-[10px]">FLATBED</span>
+                            </div>
+                            <div class="border-b border-white/5 pb-2">
+                                <span class="block text-white mb-1">Mimaki JV300</span>
+                                <span class="text-brand font-mono tracking-widest text-[10px]">SOLVENT</span>
+                            </div>
+                            <div class="border-b border-white/5 pb-2">
+                                <span class="block text-white mb-1">Zund G3</span>
+                                <span class="text-brand font-mono tracking-widest text-[10px]">CUT & CNC</span>
+                            </div>
+                            <div class="border-b border-white/5 pb-2">
+                                <span class="block text-white mb-1">Canon Colorado Gel UV</span>
+                                <span class="text-brand font-mono tracking-widest text-[10px]">GEL UV</span>
+                            </div>
+                            <div class="border-b border-white/5 pb-2 md:col-span-2">
+                                <span class="block text-white mb-1">3x Epson S80610L</span>
+                                <span class="text-brand font-mono tracking-widest text-[10px]">ECO SOLVENT</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PANEL 3: FINALIZACE & POS -->
+            <section class="panel bg-dark">
+                <div class="halftone-bg"></div>
+                <div class="absolute -left-[10vw] top-1/2 -translate-y-1/2 font-syne font-bold huge-bg-text text-stroke-brand opacity-10 z-0 parallax-element" data-speed="0.3">FIN</div>
+                <div class="relative z-10 w-full px-10 md:px-32 flex flex-col md:flex-row gap-16 md:gap-24 parallax-element" data-speed="0.1">
+                    
+                    <div class="flex-1 interactive">
+                        <h2 class="font-syne text-4xl md:text-5xl font-bold mb-6 uppercase tracking-tighter">Finalizace</h2>
+                        <div class="font-sans text-base text-white/70 leading-relaxed font-light inner-scroll custom-scrollbar pr-4" data-lenis-prevent="true">
+                            <p>Když komplet, tak komplet. U nás v Matchballu není nic jenom napůl. Chcete kvalitní tisk na materiál, na který si ukážete? Dobře, žádný problém.</p>
+                            <p class="mt-4">Chcete-li ovšem například provést laminaci (papír nebo i fólie), kašírování na PVC nebo něco oříznout či nalepit na sendvičový materiál, stačí se ozvat. Máme bohaté zkušenosti, děláme to dobře, rychle a za dobré ceny.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 interactive">
+                        <h2 class="font-syne text-4xl md:text-5xl font-bold mb-6 uppercase tracking-tighter text-brand">POS Systémy</h2>
+                        <div class="font-sans text-base text-white/70 leading-relaxed font-light inner-scroll custom-scrollbar pr-4" data-lenis-prevent="true">
+                            <p>Když přijde na POS systémy aneb zdokonalování místa prodeje, neznáme my v Matchballu bratra.</p>
+                            <p class="mt-4">Předložíme vám širokou škálu systémů, jež dodáváme komplet. To znamená hezky zabalené a hlavně kvalitně potištěné. Potom stačí pouze roll-up, stand-up, pop-up, áčko nebo muší křídla (vlajky půl-vejčitého tvaru) rozbalit, postavit a nechat působit.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- PANEL 4: APLIKACE & PRODUKTY -->
+            <section class="panel bg-[#0a0a0a]">
+                <div class="absolute right-0 bottom-0 font-syne font-bold huge-bg-text text-stroke z-0 opacity-20 parallax-element" data-speed="0.5">APP</div>
+                <div class="relative z-10 w-full px-10 md:px-32 flex flex-col md:flex-row gap-16 md:gap-24 parallax-element" data-speed="0.2">
+                    
+                    <div class="flex-1 border-l-4 border-brand pl-6 interactive">
+                        <h2 class="font-syne text-3xl md:text-5xl font-bold mb-6 uppercase">Aplikace<br>& Instalace</h2>
+                        <div class="font-sans text-white/70 leading-relaxed font-light text-sm md:text-base space-y-4 inner-scroll custom-scrollbar pr-4" data-lenis-prevent="true">
+                            <p>Když se něco vytiskne, nalepí a doladí, je většinou potřeba to někam pověsit či obecně – nainstalovat. Matchball nabízí instalace všeho druhu na všech možných i nemožných místech.</p>
+                            <p>Táhnout se s 5 metrovou cedulí na Mont Blanc sice nikdy nebyl náš sen, ale když si to budete přát, jsme na to připraveni. V našem týmu najdete kolegy s posunutým pudem sebezáchovy a hodně odolným žaludkem, takže vám cokoliv pověsíme i v závratných výškách, profesionálně vám polepíme vozový park, fasádu, okna...</p>
+                            <p class="text-brand font-medium">A jeden bonus na závěr: V lokalitě Zlín a Uherské Hradiště provádíme denní rozvoz zdarma. Zbytek ČR a SR v řádech hodin.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 border-l-4 border-white/20 pl-6 interactive">
+                        <h2 class="font-syne text-3xl md:text-5xl font-bold mb-6 uppercase">Tiskové<br>Produkty</h2>
+                        <div class="font-sans text-white/70 leading-relaxed font-light text-sm md:text-base space-y-4 inner-scroll custom-scrollbar pr-4" data-lenis-prevent="true">
+                            <p>Ukažte si na cokoliv a my vám to potiskneme (potěší, když vynecháte části vlastního těla). Řídíme se pravidlem, že nic není nemožné. Nevíme o materiálu, který bychom nedokázali probudit k životu a ty věci zůstanou živé hodně dlouho.</p>
+                            <p>Mezi naše přednosti v tiskové oblasti patří <strong class="text-white">absolutní UV stálost a fotokvalita</strong>.</p>
+                            <div class="mt-4 p-4 bg-white/5 border border-white/10 rounded-sm">
+                                <span class="text-white font-syne uppercase tracking-widest text-xs block mb-2 text-brand">Materiály:</span>
+                                Papír, PVC, Vinyly, Plachtoviny, Speciální materiály.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- PANEL 5: KONTAKT -->
+            <section class="panel bg-brand text-dark justify-center flex-col relative">
+                <div class="absolute left-[5vw] top-1/2 -translate-y-1/2 font-syne font-bold huge-bg-text opacity-10 parallax-element text-dark pointer-events-none" data-speed="0.6">CONTACT</div>
+                
+                <div class="relative z-10 w-full px-10 md:px-32 flex flex-col h-full justify-center pt-20 pb-10">
+                    <h2 class="font-syne text-5xl md:text-[7vw] font-black uppercase tracking-tighter leading-none mb-10 parallax-element" data-speed="0.1">Spojme se.</h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 font-sans parallax-element inner-scroll custom-scrollbar pr-2" data-lenis-prevent="true" data-speed="0.2">
+                        <!-- Obchod -->
+                        <div>
+                            <h3 class="font-syne font-bold uppercase mb-4 text-dark/60 tracking-widest text-xs">Obchodní oddělení</h3>
+                            <div class="mb-5 interactive">
+                                <p class="font-bold text-lg uppercase font-syne">Jiří Rozsypálek</p>
+                                <p class="text-xs font-medium mb-1">Jednatel</p>
+                                <p class="text-sm">602 547 899<br>jiri@mball.cz</p>
+                            </div>
+                            <div class="interactive">
+                                <p class="font-bold text-lg uppercase font-syne">Jaromír Vaněček</p>
+                                <p class="text-xs font-medium mb-1">Obchodní ředitel</p>
+                                <p class="text-sm">606 038 315<br>jaromir@mball.cz</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Produkce -->
+                        <div>
+                            <h3 class="font-syne font-bold uppercase mb-4 text-dark/60 tracking-widest text-xs">Příjem zakázek</h3>
+                            <div class="space-y-4">
+                                <div class="interactive">
+                                    <p class="font-bold text-base uppercase font-syne">Petra Bělejová</p>
+                                    <p class="text-sm">724 593 384<br>tisk@mball.cz</p>
+                                </div>
+                                <div class="interactive">
+                                    <p class="font-bold text-base uppercase font-syne">Blanka Vitásková</p>
+                                    <p class="text-sm">724 120 112<br>blanka@mball.cz</p>
+                                </div>
+                                <div class="interactive">
+                                    <p class="font-bold text-base uppercase font-syne">Hanka Sokolová</p>
+                                    <p class="text-sm">603 228 131<br>veronika@mball.cz</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sídlo -->
+                        <div>
+                            <h3 class="font-syne font-bold uppercase mb-4 text-dark/60 tracking-widest text-xs">Sídlo společnosti</h3>
+                            <p class="text-base font-medium interactive">
+                                MATCHBALL s.r.o.<br>
+                                Pod Zahrádkami 105<br>
+                                Napajedla, 763 61
+                            </p>
+                        </div>
+                        
+                        <!-- Projekt -->
+                        <div class="flex flex-col justify-between">
+                            <p class="text-xs uppercase tracking-widest font-syne opacity-60 font-bold mb-4">
+                                Projekt digitalizace a automatizace interních procesů společnosti MATCHBALL S.R.O.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer Footer -->
+                    <div class="absolute bottom-6 left-10 md:left-32 right-10 md:right-32 flex justify-between items-center text-xs uppercase tracking-widest font-syne opacity-50 font-bold parallax-element" data-speed="0">
+                        <span>&copy; 2026 MATCHBALL</span>
+                        <span>Všechna práva vyhrazena</span>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        // 1. Initial Page Loader Animation
+        const loader = document.getElementById('loader');
+        const loaderNum = document.querySelector('.loader-num');
+        const loaderText = document.querySelector('.loader-text');
+        
+        let progress = 0;
+        
+        // Setup GSAP defaults
+        gsap.defaults({ ease: "power3.out" });
+
+        // Intro text slide up
+        gsap.to(loaderText, { y: 0, duration: 1, delay: 0.2 });
+        gsap.to(loaderNum, { y: 0, duration: 1, delay: 0.4 });
+
+        const progressInterval = setInterval(() => {
+            progress += Math.floor(Math.random() * 15) + 5;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(progressInterval);
+                loaderNum.innerText = progress + "%";
+                
+                // Animate loader out
+                gsap.to(loader, {
+                    yPercent: -100,
+                    duration: 1.2,
+                    ease: "expo.inOut",
+                    delay: 0.3,
+                    onComplete: initScrollExperience // Start scrolling after load
+                });
+            } else {
+                loaderNum.innerText = progress + "%";
+            }
+        }, 100);
+
+        // 2. Custom Magnetic Cursor
+        const cursor = document.querySelector('.cursor-dot');
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+        let cursorX = mouseX, cursorY = mouseY;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        // Smooth follow via requestAnimationFrame (Lerp)
+        function updateCursor() {
+            cursorX += (mouseX - cursorX) * 0.2;
+            cursorY += (mouseY - cursorY) * 0.2;
+            cursor.style.transform = `translate(${cursorX}px, ${cursorY}px)`;
+            requestAnimationFrame(updateCursor);
+        }
+        updateCursor();
+
+        // Cursor hover states
+        document.querySelectorAll('.interactive, a, button').forEach(el => {
+            el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+            el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+        });
+
+        // 3. Init Smooth Horizontal Scroll (Lenis + GSAP)
+        function initScrollExperience() {
+            // Register ScrollTrigger
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Initialize Lenis
+            const lenis = new Lenis({
+                duration: 1.5, // Ultra smooth length
+                easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+                direction: 'vertical',
+                gestureDirection: 'vertical',
+                smooth: true,
+                smoothTouch: false,
+                touchMultiplier: 2,
+            });
+
+            // Sync Lenis with GSAP ScrollTrigger
+            lenis.on('scroll', ScrollTrigger.update);
+            gsap.ticker.add((time) => { lenis.raf(time * 1000) });
+            gsap.ticker.lagSmoothing(0, 0);
+
+            // HORIZONTAL SCROLL LOGIC
+            const wrapper = document.getElementById("horizontal-wrapper");
+            const panels = gsap.utils.toArray(".panel");
+            
+            // The main tween that moves the container horizontally
+            const horizontalTween = gsap.to(panels, {
+                xPercent: -100 * (panels.length - 1),
+                ease: "none", // important for sync with scroll
+                scrollTrigger: {
+                    trigger: "#scroll-container",
+                    pin: true,
+                    scrub: 1, // 1 second delay on scrub for smoothness
+                    end: () => "+=" + (wrapper.offsetWidth - window.innerWidth)
+                }
+            });
+
+            // 4. Parallax Elements INSIDE the horizontal scroll
+            // Using containerAnimation feature of ScrollTrigger
+            gsap.utils.toArray('.parallax-element').forEach(el => {
+                const speed = parseFloat(el.getAttribute('data-speed'));
+                
+                // The amount to move the element based on its speed
+                const moveAmount = window.innerWidth * speed;
+                
+                gsap.to(el, {
+                    x: moveAmount,
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: el.closest('.panel'),
+                        containerAnimation: horizontalTween,
+                        start: "left right", // when left of panel hits right of screen
+                        end: "right left",   // when right of panel hits left of screen
+                        scrub: true
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
